@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { isTokenExpired } from '../utils/errorHandling';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -14,24 +15,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accountNumber, setAccountNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('atm_token');
-    const savedAccount = localStorage.getItem('atm_account');
+    const token = sessionStorage.getItem('atm_token');
+    const savedAccount = sessionStorage.getItem('atm_account');
+
     if (token && savedAccount) {
-      setIsAuthenticated(true);
-      setAccountNumber(savedAccount);
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        // Clear expired token
+        sessionStorage.removeItem('atm_token');
+        sessionStorage.removeItem('atm_account');
+        setIsAuthenticated(false);
+        setAccountNumber(null);
+      } else {
+        setIsAuthenticated(true);
+        setAccountNumber(savedAccount);
+      }
     }
   }, []);
 
   const login = (token: string, account: string) => {
-    localStorage.setItem('atm_token', token);
-    localStorage.setItem('atm_account', account);
+    sessionStorage.setItem('atm_token', token);
+    sessionStorage.setItem('atm_account', account);
     setIsAuthenticated(true);
     setAccountNumber(account);
   };
 
   const logout = () => {
-    localStorage.removeItem('atm_token');
-    localStorage.removeItem('atm_account');
+    sessionStorage.removeItem('atm_token');
+    sessionStorage.removeItem('atm_account');
     setIsAuthenticated(false);
     setAccountNumber(null);
   };

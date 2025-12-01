@@ -1,11 +1,14 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
+from sqlmodel import Session, select
 from pydantic import BaseModel
-from datetime import date, timezone, datetime
+from datetime import timezone, datetime
 
 from app.database import get_session
 from app.models import User, Account
 from app.auth import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -78,10 +81,7 @@ def withdraw(
     user, account = user_account
     amount = request.amount
 
-    # Reset daily limit if new day
-    reset_daily_limit_if_needed(account)
-
-    # Validate amount
+    # Basic validation (can be done before locking)
     if amount < MIN_WITHDRAWAL_CENTS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,34 +94,59 @@ def withdraw(
             detail={"code": "INVALID_AMOUNT", "message": "Withdrawal must be in multiples of $20"}
         )
 
-    # Check balance
-    if amount > account.balance_cents:
+    try:
+        # Re-fetch account with lock to prevent race conditions
+        # Note: with_for_update() works with PostgreSQL; SQLite uses file-level locking
+        stmt = select(Account).where(Account.id == account.id).with_for_update()
+        locked_account = session.exec(stmt).first()
+
+        if locked_account is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"code": "ACCOUNT_NOT_FOUND", "message": "Account not found"}
+            )
+
+        # Reset daily limit if new day
+        reset_daily_limit_if_needed(locked_account)
+
+        # Check balance with latest data
+        if amount > locked_account.balance_cents:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"code": "INSUFFICIENT_FUNDS", "message": "Balance is less than withdrawal amount"}
+            )
+
+        # Check daily limit with latest data
+        if locked_account.daily_withdrawn_cents + amount > DAILY_LIMIT_CENTS:
+            remaining = DAILY_LIMIT_CENTS - locked_account.daily_withdrawn_cents
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "DAILY_LIMIT_EXCEEDED",
+                    "message": f"Would exceed daily limit. Remaining: ${remaining // 100}"
+                }
+            )
+
+        # Perform withdrawal
+        locked_account.balance_cents -= amount
+        locked_account.daily_withdrawn_cents += amount
+        locked_account.last_withdrawal_date = datetime.now(timezone.utc).date()
+
+        session.add(locked_account)
+        session.commit()
+        session.refresh(locked_account)
+
+        return WithdrawResponse(new_balance=locked_account.balance_cents, withdrawn=amount)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Withdrawal failed: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"code": "INSUFFICIENT_FUNDS", "message": "Balance is less than withdrawal amount"}
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "TRANSACTION_FAILED", "message": "Transaction failed, please try again"}
         )
-
-    # Check daily limit
-    if account.daily_withdrawn_cents + amount > DAILY_LIMIT_CENTS:
-        remaining = DAILY_LIMIT_CENTS - account.daily_withdrawn_cents
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "DAILY_LIMIT_EXCEEDED",
-                "message": f"Would exceed daily limit. Remaining: ${remaining // 100}"
-            }
-        )
-
-    # Perform withdrawal
-    account.balance_cents -= amount
-    account.daily_withdrawn_cents += amount
-    account.last_withdrawal_date = datetime.now(timezone.utc).date()
-
-    session.add(account)
-    session.commit()
-    session.refresh(account)
-
-    return WithdrawResponse(new_balance=account.balance_cents, withdrawn=amount)
 
 
 @router.post("/deposit", response_model=DepositResponse)

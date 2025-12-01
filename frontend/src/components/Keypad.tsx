@@ -23,19 +23,19 @@ export function Keypad({ value, onChange, maxLength }: KeypadProps) {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3 w-full max-w-[280px]">
+    <div className="grid grid-cols-3 gap-4 w-full max-w-[320px]">
       {keys.flat().map((key) => (
         <button
           key={key}
           type="button"
           onClick={() => handleKeyPress(key)}
           className={`
-            h-16 rounded-lg text-xl font-semibold transition-all duration-150
+            h-[72px] rounded-xl text-2xl font-semibold transition-all duration-150 shadow-sm
             ${key === 'clear'
-              ? 'bg-[--color-gray-200] text-[--color-gray-700] hover:bg-[--color-gray-300] active:bg-[--color-gray-300]'
+              ? 'bg-[var(--color-gray-200)] text-[var(--color-gray-700)] hover:bg-[var(--color-gray-300)] active:bg-[var(--color-gray-300)]'
               : key === 'back'
-              ? 'bg-[--color-gray-200] text-[--color-gray-700] hover:bg-[--color-gray-300] active:bg-[--color-gray-300]'
-              : 'bg-white text-[--color-gray-900] border border-[--color-gray-300] hover:bg-[--color-gray-50] active:bg-[--color-gray-100]'
+              ? 'bg-[var(--color-gray-200)] text-[var(--color-gray-700)] hover:bg-[var(--color-gray-300)] active:bg-[var(--color-gray-300)]'
+              : 'bg-white text-[var(--color-gray-900)] border-2 border-[var(--color-gray-300)] hover:bg-[var(--color-gray-50)] hover:border-[var(--color-primary)] active:bg-[var(--color-gray-100)]'
             }
             active:scale-95
           `}

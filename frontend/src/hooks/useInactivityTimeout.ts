@@ -12,8 +12,7 @@ export function useInactivityTimeout({
   enabled = true,
 }: UseInactivityTimeoutOptions) {
   const [remainingSeconds, setRemainingSeconds] = useState(timeoutSeconds);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const resetTimer = useCallback(() => {
     setRemainingSeconds(timeoutSeconds);

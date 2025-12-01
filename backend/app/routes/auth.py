@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.database import get_session
 from app.models import User
@@ -10,8 +10,20 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class LoginRequest(BaseModel):
-    account_number: str
-    pin: str
+    account_number: str = Field(
+        ...,
+        min_length=10,
+        max_length=10,
+        pattern=r"^\d{10}$",
+        description="10-digit account number"
+    )
+    pin: str = Field(
+        ...,
+        min_length=4,
+        max_length=4,
+        pattern=r"^\d{4}$",
+        description="4-digit PIN"
+    )
 
 
 class LoginResponse(BaseModel):

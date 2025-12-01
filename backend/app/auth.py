@@ -1,3 +1,5 @@
+import os
+import logging
 import bcrypt
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
@@ -9,8 +11,12 @@ from typing import Optional
 from app.database import get_session
 from app.models import User, Account
 
+logger = logging.getLogger(__name__)
+
 # Configuration
-SECRET_KEY = "atm-secret-key-change-in-production"
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-do-not-use-in-production")
+if SECRET_KEY == "dev-secret-key-do-not-use-in-production":
+    logger.warning("Using default SECRET_KEY. Set SECRET_KEY environment variable in production!")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
@@ -43,7 +49,8 @@ def decode_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
+        logger.debug(f"JWT decode error: {e}")
         return None
 
 
@@ -66,7 +73,11 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
 
-    user = session.get(User, int(user_id))
+    try:
+        user = session.get(User, int(user_id))
+    except ValueError:
+        logger.debug(f"Invalid user_id in token: {user_id}")
+        raise credentials_exception
     if user is None:
         raise credentials_exception
 

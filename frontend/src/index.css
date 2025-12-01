@@ -30,3 +30,8 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Account number input - normal spacing for placeholder, wide for typed text */
+.account-input::placeholder {
+  letter-spacing: normal;
+}

@@ -15,7 +15,7 @@ export function SuccessModal({
   amount,
   onAnotherTransaction,
   onExit,
-  autoLogoutSeconds = 15,
+  autoLogoutSeconds = 25,
 }: SuccessModalProps) {
   const [countdown, setCountdown] = useState(autoLogoutSeconds);
 
@@ -51,11 +51,11 @@ export function SuccessModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center border border-[--color-gray-200]">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center border border-[var(--color-gray-200)]">
         {/* Success Icon */}
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
-            className="w-8 h-8 text-[--color-success]"
+            className="w-8 h-8 text-[var(--color-success)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -70,15 +70,15 @@ export function SuccessModal({
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-[--color-gray-900] mb-2">
+        <h2 className="text-xl font-bold text-[var(--color-gray-900)] mb-2">
           Transaction Complete
         </h2>
 
         {/* Amount */}
-        <p className="text-[--color-gray-700] mb-1">
+        <p className="text-[var(--color-gray-700)] mb-1">
           Successfully {type === 'withdraw' ? 'withdrew' : 'deposited'}
         </p>
-        <p className="text-3xl font-bold text-[--color-gray-900] mb-6">
+        <p className="text-3xl font-bold text-[var(--color-gray-900)] mb-6">
           {formatCurrency(amount)}
         </p>
 
@@ -86,21 +86,21 @@ export function SuccessModal({
         <div className="space-y-3">
           <button
             onClick={onAnotherTransaction}
-            className="w-full py-3 bg-[--color-primary] text-white rounded-lg font-medium hover:bg-[--color-primary-dark] transition-colors"
+            className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
           >
             Another Transaction
           </button>
           <button
             onClick={onExit}
-            className="w-full py-3 bg-[--color-gray-100] text-[--color-gray-700] rounded-lg font-medium hover:bg-[--color-gray-200] transition-colors border border-[--color-gray-300]"
+            className="w-full py-3 bg-[var(--color-gray-100)] text-[var(--color-gray-700)] rounded-lg font-medium hover:bg-[var(--color-gray-200)] transition-colors border border-[var(--color-gray-300)]"
           >
             Exit
           </button>
         </div>
 
         {/* Countdown */}
-        <p className="text-sm text-[--color-gray-500] mt-4">
-          Auto-logout in <span className="font-semibold text-[--color-gray-700]">{countdown}</span> seconds
+        <p className="text-sm text-[var(--color-gray-500)] mt-4">
+          Auto-logout in <span className="font-semibold text-[var(--color-gray-700)]">{countdown}</span> seconds
         </p>
       </div>
     </div>

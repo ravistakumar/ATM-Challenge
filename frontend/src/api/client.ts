@@ -9,8 +9,12 @@ import type {
   DepositResponse,
 } from '../types';
 
+// Flag to prevent multiple simultaneous logout redirects
+let isLoggingOut = false;
+
 const api = axios.create({
   baseURL: '/api',
+  timeout: 30000, // 30 second timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,7 +22,7 @@ const api = axios.create({
 
 // Add JWT token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('atm_token');
+  const token = sessionStorage.getItem('atm_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -29,8 +33,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('atm_token');
+    if (error.response?.status === 401 && !isLoggingOut) {
+      isLoggingOut = true;
+      sessionStorage.removeItem('atm_token');
+      sessionStorage.removeItem('atm_account');
       window.location.href = '/';
     }
     return Promise.reject(error);

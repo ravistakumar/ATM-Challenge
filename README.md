@@ -1,6 +1,6 @@
 # ATM Challenge
 
-ATM simulation application with account authentication, balance inquiry, deposits, and withdrawals.
+ATM simulation with authentication, balance inquiry, deposits, and withdrawals.
 
 ## Prerequisites
 
@@ -9,25 +9,23 @@ ATM simulation application with account authentication, balance inquiry, deposit
 
 ## Quick Start
 
-### 1. Start the Backend
+### Backend
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Start the Frontend
+### Frontend
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-### 3. Access the Application
 
 Open `http://localhost:3000` in your browser.
 
